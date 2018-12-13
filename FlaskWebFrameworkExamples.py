@@ -82,11 +82,48 @@ th, td {
     sql = "SELECT * FROM cars"
     cursor.execute(sql)
     for id1,carname,price in cursor.fetchall():
-        string+="<tr align='center'><td>{}</td><td>{}</td><td>{} $</td></tr>".format(id1,carname,price)
+        string+="<tr align='center'><td>{}</td><td>{}</td><td>{}</td><td><a href='/remove/{}'>X</a></td><td><a href='/edit/{}'>Modify</a></td></tr>".format(id1,carname,price,id1,id1)
     conn.close()
     string+="<table border=1>"
-    return string
+    return string+"""<a href="/addcar" align='center'>Add New Car</a>"""
 
+
+@app.route("/remove/<cid>")
+def remove(cid):
+    conn = sqlite3.connect("mydatabase.db")
+    cursor = conn.cursor()
+    sql = "DELETE FROM cars WHERE Id = {}".format(int(cid))
+    cursor.execute(sql)
+    conn.commit()
+    return redirect(url_for("cars"))
+
+@app.route("/update",methods=["post"])
+def update():
+    conn = sqlite3.connect("mydatabase.db")
+    cursor = conn.cursor()
+ 
+    sql = "UPDATE cars SET Id = {}, Carname = '{}',Price = {} WHERE Id = {}".format(int(request.form.get("cid")),request.form.get("brand"),int(request.form.get("price")),int(request.form.get("cid")))
+    cursor.execute(sql)
+    conn.commit()
+    return redirect(url_for("cars"))
+
+@app.route("/edit/<cid>")
+def edit(cid):
+
+    conn = sqlite3.connect("mydatabase.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM cars where Id={}".format(int(cid)))
+    cid,brand,price=cursor.fetchone()
+    html="""
+    <form action='/update' method=post>
+    <input type=text name=cid value={}>Car Id<br>
+    <input type=text name=brand value={}>Brand<br>
+    <input type=text name=price value={}>Price<br>
+    <input type=submit><br>
+    </form>
+    """.format(cid,brand,price)
+    
+    return html
 
 @app.route("/addnewcar",methods=["post"])
 def addnewcar():
